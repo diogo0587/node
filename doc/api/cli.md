@@ -25,16 +25,14 @@ For more info about `node inspect`, see the [debugger][] documentation.
 
 The program entry point is a specifier-like string. If the string is not an
 absolute path, it's resolved as a relative path from the current working
-directory. That path is then resolved by [CommonJS][] module loader, or by the
-[ES module loader][Modules loaders] if [`--experimental-default-type=module`][]
-is passed. If no corresponding file is found, an error is thrown.
+directory. That path is then resolved by [CommonJS][] module loader. If no
+corresponding file is found, an error is thrown.
 
 If a file is found, its path will be passed to the
 [ES module loader][Modules loaders] under any of the following conditions:
 
 * The program was started with a command-line flag that forces the entry
-  point to be loaded with ECMAScript module loader, such as `--import` or
-  [`--experimental-default-type=module`][].
+  point to be loaded with ECMAScript module loader, such as `--import`.
 * The file has an `.mjs` extension.
 * The file does not have a `.cjs` extension, and the nearest parent
   `package.json` file contains a top-level [`"type"`][] field with a value of
@@ -47,9 +45,8 @@ Otherwise, the file is loaded using the CommonJS module loader. See
 
 When loading, the [ES module loader][Modules loaders] loads the program
 entry point, the `node` command will accept as input only files with `.js`,
-`.mjs`, or `.cjs` extensions; with `.wasm` extensions when
-[`--experimental-wasm-modules`][] is enabled; and with no extension when
-[`--experimental-default-type=module`][] is passed.
+`.mjs`, or `.cjs` extensions; and with `.wasm` extensions when
+[`--experimental-wasm-modules`][] is enabled.
 
 ## Options
 
@@ -896,38 +893,6 @@ and `"` are usable.
 It is possible to run code containing inline types by passing
 [`--experimental-strip-types`][].
 
-### `--experimental-default-type=type`
-
-<!-- YAML
-added:
-  - v21.0.0
-  - v20.10.0
-  - v18.19.0
--->
-
-> Stability: 1.0 - Early development
-
-Define which module system, `module` or `commonjs`, to use for the following:
-
-* String input provided via `--eval` or STDIN, if `--input-type` is unspecified.
-
-* Files ending in `.js` or with no extension, if there is no `package.json` file
-  present in the same folder or any parent folder.
-
-* Files ending in `.js` or with no extension, if the nearest parent
-  `package.json` field lacks a `"type"` field; unless the `package.json` folder
-  or any parent folder is inside a `node_modules` folder.
-
-In other words, `--experimental-default-type=module` flips all the places where
-Node.js currently defaults to CommonJS to instead default to ECMAScript modules,
-with the exception of folders and subfolders below `node_modules`, for backward
-compatibility.
-
-Under `--experimental-default-type=module` and `--experimental-wasm-modules`,
-files with no extension will be treated as WebAssembly if they begin with the
-WebAssembly magic number (`\0asm`); otherwise they will be treated as ES module
-JavaScript.
-
 ### `--experimental-transform-types`
 
 <!-- YAML
@@ -1404,7 +1369,7 @@ added: v12.0.0
 
 This configures Node.js to interpret `--eval` or `STDIN` input as CommonJS or
 as an ES module. Valid values are `"commonjs"` or `"module"`. The default is
-`"commonjs"` unless [`--experimental-default-type=module`][] is used.
+`"commonjs"`.
 
 The REPL does not support this option. Usage of `--input-type=module` with
 [`--print`][] will throw an error, as `--print` does not support ES module
@@ -2571,6 +2536,45 @@ added: v0.8.0
 
 Print stack traces for deprecations.
 
+### `--trace-env`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+Print information about any access to environment variables done in the current Node.js
+instance to stderr, including:
+
+* The environment variable reads that Node.js does internally.
+* Writes in the form of `process.env.KEY = "SOME VALUE"`.
+* Reads in the form of `process.env.KEY`.
+* Definitions in the form of `Object.defineProperty(process.env, 'KEY', {...})`.
+* Queries in the form of `Object.hasOwn(process.env, 'KEY')`,
+  `process.env.hasOwnProperty('KEY')` or `'KEY' in process.env`.
+* Deletions in the form of `delete process.env.KEY`.
+* Enumerations inf the form of `...process.env` or `Object.keys(process.env)`.
+
+Only the names of the environment variables being accessed are printed. The values are not printed.
+
+To print the stack trace of the access, use `--trace-env-js-stack` and/or
+`--trace-env-native-stack`.
+
+### `--trace-env-js-stack`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+In addition to what `--trace-env` does, this prints the JavaScript stack trace of the access.
+
+### `--trace-env-native-stack`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+In addition to what `--trace-env` does, this prints the native stack trace of the access.
+
 ### `--trace-event-categories`
 
 <!-- YAML
@@ -3018,7 +3022,6 @@ one is included in the list below.
 * `--enable-source-maps`
 * `--entry-url`
 * `--experimental-abortcontroller`
-* `--experimental-default-type`
 * `--experimental-detect-module`
 * `--experimental-eventsource`
 * `--experimental-import-meta-resolve`
@@ -3117,6 +3120,9 @@ one is included in the list below.
 * `--tls-min-v1.2`
 * `--tls-min-v1.3`
 * `--trace-deprecation`
+* `--trace-env-js-stack`
+* `--trace-env-native-stack`
+* `--trace-env`
 * `--trace-event-categories`
 * `--trace-event-file-pattern`
 * `--trace-events-enabled`
@@ -3578,7 +3584,6 @@ node --stack-trace-limit=12 -p -e "Error.stackTraceLimit" # prints 12
 [`--diagnostic-dir`]: #--diagnostic-dirdirectory
 [`--env-file-if-exists`]: #--env-file-if-existsconfig
 [`--env-file`]: #--env-fileconfig
-[`--experimental-default-type=module`]: #--experimental-default-typetype
 [`--experimental-sea-config`]: single-executable-applications.md#generating-single-executable-preparation-blobs
 [`--experimental-strip-types`]: #--experimental-strip-types
 [`--experimental-wasm-modules`]: #--experimental-wasm-modules
