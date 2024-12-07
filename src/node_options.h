@@ -131,7 +131,6 @@ class EnvironmentOptions : public Options {
   bool experimental_wasm_modules = false;
   bool experimental_import_meta_resolve = false;
   std::string input_type;  // Value of --input-type
-  std::string type;        // Value of --experimental-default-type
   bool entry_is_url = false;
   bool experimental_permission = false;
   std::vector<std::string> allow_fs_read;
@@ -208,6 +207,9 @@ class EnvironmentOptions : public Options {
   bool trace_uncaught = false;
   bool trace_warnings = false;
   bool trace_promises = false;
+  bool trace_env = false;
+  bool trace_env_js_stack = false;
+  bool trace_env_native_stack = false;
   bool extra_info_on_fatal_exception = true;
   std::string unhandled_rejections;
   std::vector<std::string> userland_loaders;
