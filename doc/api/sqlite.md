@@ -108,6 +108,10 @@ added: v22.5.0
     [double-quoted string literals][]. This is not recommended but can be
     enabled for compatibility with legacy database schemas.
     **Default:** `false`.
+  * `allowExtension` {boolean} If `true`, the `loadExtension` SQL function
+    and the `loadExtension()` method are enabled.
+    You can call `enableLoadExtension(false)` later to disable this feature.
+    **Default:** `false`.
 
 Constructs a new `DatabaseSync` instance.
 
@@ -120,6 +124,30 @@ added: v22.5.0
 Closes the database connection. An exception is thrown if the database is not
 open. This method is a wrapper around [`sqlite3_close_v2()`][].
 
+### `database.loadExtension(path)`
+
+<!-- YAML
+added: v23.5.0
+-->
+
+* `path` {string} The path to the shared library to load.
+
+Loads a shared library into the database connection. This method is a wrapper
+around [`sqlite3_load_extension()`][]. It is required to enable the
+`allowExtension` option when constructing the `DatabaseSync` instance.
+
+### `database.enableLoadExtension(allow)`
+
+<!-- YAML
+added: v23.5.0
+-->
+
+* `allow` {boolean} Whether to allow loading extensions.
+
+Enables or disables the `loadExtension` SQL function, and the `loadExtension()`
+method. When `allowExtension` is `false` when constructing, you cannot enable
+loading extensions for security reasons.
+
 ### `database.exec(sql)`
 
 <!-- YAML
@@ -131,6 +159,31 @@ added: v22.5.0
 This method allows one or more SQL statements to be executed without returning
 any results. This method is useful when executing SQL statements read from a
 file. This method is a wrapper around [`sqlite3_exec()`][].
+
+### `database.function(name[, options], function)`
+
+<!-- YAML
+added: v23.5.0
+-->
+
+* `name` {string} The name of the SQLite function to create.
+* `options` {Object} Optional configuration settings for the function. The
+  following properties are supported:
+  * `deterministic` {boolean} If `true`, the [`SQLITE_DETERMINISTIC`][] flag is
+    set on the created function. **Default:** `false`.
+  * `directOnly` {boolean} If `true`, the [`SQLITE_DIRECTONLY`][] flag is set on
+    the created function. **Default:** `false`.
+  * `useBigIntArguments` {boolean} If `true`, integer arguments to `function`
+    are converted to `BigInt`s. If `false`, integer arguments are passed as
+    JavaScript numbers. **Default:** `false`.
+  * `varargs` {boolean} If `true`, `function` can accept a variable number of
+    arguments. If `false`, `function` must be invoked with exactly
+    `function.length` arguments. **Default:** `false`.
+* `function` {Function} The JavaScript function to call when the SQLite
+  function is invoked.
+
+This method is used to create SQLite user-defined functions. This method is a
+wrapper around [`sqlite3_create_function_v2()`][].
 
 ### `database.open()`
 
@@ -156,6 +209,12 @@ around [`sqlite3_prepare_v2()`][].
 
 ### `database.createSession([options])`
 
+<!-- YAML
+added:
+  - v23.3.0
+  - v22.12.0
+-->
+
 * `options` {Object} The configuration options for the session.
   * `table` {string} A specific table to track changes for. By default, changes to all tables are tracked.
   * `db` {string} Name of the database to track. This is useful when multiple databases have been added using [`ATTACH DATABASE`][]. **Default**: `'main'`.
@@ -165,6 +224,12 @@ Creates and attaches a session to the database. This method is a wrapper around 
 
 ### `database.applyChangeset(changeset[, options])`
 
+<!-- YAML
+added:
+  - v23.3.0
+  - v22.12.0
+-->
+
 * `changeset` {Uint8Array} A binary changeset or patchset.
 * `options` {Object} The configuration options for how the changes will be applied.
   * `filter` {Function} Skip changes that, when targeted table name is supplied to this function, return a truthy value.
@@ -172,7 +237,7 @@ Creates and attaches a session to the database. This method is a wrapper around 
   * `onConflict` {number} Determines how conflicts are handled. **Default**: `SQLITE_CHANGESET_ABORT`.
     * `SQLITE_CHANGESET_OMIT`: conflicting changes are omitted.
     * `SQLITE_CHANGESET_REPLACE`: conflicting changes replace existing values.
-    * `SQLITE_CHANGESET_ABORT`: abort on conflict and roll back databsase.
+    * `SQLITE_CHANGESET_ABORT`: abort on conflict and roll back database.
 * Returns: {boolean} Whether the changeset was applied succesfully without being aborted.
 
 An exception is thrown if the database is not
@@ -198,7 +263,19 @@ targetDb.applyChangeset(changeset);
 
 ## Class: `Session`
 
+<!-- YAML
+added:
+  - v23.3.0
+  - v22.12.0
+-->
+
 ### `session.changeset()`
+
+<!-- YAML
+added:
+  - v23.3.0
+  - v22.12.0
+-->
 
 * Returns: {Uint8Array} Binary changeset that can be applied to other databases.
 
@@ -206,6 +283,12 @@ Retrieves a changeset containing all changes since the changeset was created. Ca
 An exception is thrown if the database or the session is not open. This method is a wrapper around [`sqlite3session_changeset()`][].
 
 ### `session.patchset()`
+
+<!-- YAML
+added:
+  - v23.3.0
+  - v22.12.0
+-->
 
 * Returns: {Uint8Array} Binary patchset that can be applied to other databases.
 
@@ -290,7 +373,7 @@ values in `namedParameters` and `anonymousParameters`.
 ### `statement.iterate([namedParameters][, ...anonymousParameters])`
 
 <!-- YAML
-added: REPLACEME
+added: v23.4.0
 -->
 
 * `namedParameters` {Object} An optional object used to bind named parameters.
@@ -399,11 +482,19 @@ exception.
 | `TEXT`    | {string}             |
 | `BLOB`    | {Uint8Array}         |
 
-## SQLite constants
+## `sqlite.constants`
 
-The following constants are exported by the `node:sqlite` module.
+<!-- YAML
+added: v23.5.0
+-->
 
-### SQLite Session constants
+* {Object}
+
+An object containing commonly used constants for SQLite operations.
+
+### SQLite constants
+
+The following constants are exported by the `sqlite.constants` object.
 
 #### Conflict-resolution constants
 
@@ -424,7 +515,7 @@ The following constants are meant for use with [`database.applyChangeset()`](#da
   </tr>
   <tr>
     <td><code>SQLITE_CHANGESET_ABORT</code></td>
-    <td>Abort when a change encounters a conflict and roll back databsase.</td>
+    <td>Abort when a change encounters a conflict and roll back database.</td>
   </tr>
 </table>
 
@@ -432,11 +523,15 @@ The following constants are meant for use with [`database.applyChangeset()`](#da
 [SQL injection]: https://en.wikipedia.org/wiki/SQL_injection
 [`ATTACH DATABASE`]: https://www.sqlite.org/lang_attach.html
 [`PRAGMA foreign_keys`]: https://www.sqlite.org/pragma.html#pragma_foreign_keys
+[`SQLITE_DETERMINISTIC`]: https://www.sqlite.org/c3ref/c_deterministic.html
+[`SQLITE_DIRECTONLY`]: https://www.sqlite.org/c3ref/c_deterministic.html
 [`sqlite3_changes64()`]: https://www.sqlite.org/c3ref/changes.html
 [`sqlite3_close_v2()`]: https://www.sqlite.org/c3ref/close.html
+[`sqlite3_create_function_v2()`]: https://www.sqlite.org/c3ref/create_function.html
 [`sqlite3_exec()`]: https://www.sqlite.org/c3ref/exec.html
 [`sqlite3_expanded_sql()`]: https://www.sqlite.org/c3ref/expanded_sql.html
 [`sqlite3_last_insert_rowid()`]: https://www.sqlite.org/c3ref/last_insert_rowid.html
+[`sqlite3_load_extension()`]: https://www.sqlite.org/c3ref/load_extension.html
 [`sqlite3_prepare_v2()`]: https://www.sqlite.org/c3ref/prepare.html
 [`sqlite3_sql()`]: https://www.sqlite.org/c3ref/expanded_sql.html
 [`sqlite3changeset_apply()`]: https://www.sqlite.org/session/sqlite3changeset_apply.html
